@@ -7,7 +7,6 @@ char getTermChar()
 {
     struct termios curAttr, getchAttr;
     
-    
     tcgetattr( STDIN_FILENO, &curAttr );
     
     getchAttr = curAttr;
@@ -33,9 +32,13 @@ void insertch(char ch, int idx, char* dest)
     }
 }
 
-void refreshLine(char* str)
-{
-    printf("\033[[2J :: %s", str);
+void refreshLine(char* str, int len)
+{ 
+    printf("\0337");
+    printf("\033[2K");
+    printf("\033[%dD", len+4);
+    printf(" :: %s", str);
+    printf("\0338");
 }
 
 void getTermLine(char* dest)
@@ -78,7 +81,8 @@ void getTermLine(char* dest)
                 break;
             default: // Standard character or random special character I don't know about
                 insertch(ch, destIdx++, dest);
-                refreshLine(dest);
+                refreshLine(dest, destIdx);
+                printf("\033[1C");
         };
     } while(ch != '\n');
 }
