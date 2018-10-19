@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+int writtenLength = 0;
+
 char getTermChar()
 {
     struct termios curAttr, getchAttr;
@@ -51,6 +53,7 @@ void getTermLine(char* dest)
     do
     {
         ch = getTermChar();
+        char tmp = '\0';
         switch(ch)
         {
             case '\n':
@@ -62,7 +65,18 @@ void getTermLine(char* dest)
                 insertch('\n', destIdx++, dest);
                 putchar('\n');
                 break;
-            case '\b': // Backspace
+            case '\b': // Backspace  
+                if(destIdx > 0)
+                {
+                    for (int i = writtenLength-- - 1; i >= destIdx - 1 ; i--)
+                        {
+                            ch = dest[i];
+                            dest[i] = tmp;
+                            tmp = ch;
+                        }
+                    refreshLine(dest, destIdx--);
+                    printf("\033[1D");
+                }
                 break;
             case '\033':
                 getTermChar();
@@ -70,12 +84,18 @@ void getTermLine(char* dest)
                 switch (ch)
                 {
                     case 'C':
-                        destIdx++;
-                        printf("\033[C");
+                        if(destIdx < writtenLength)
+                        {
+                            destIdx++;
+                            printf("\033[C");
+                        }
                         break;
                     case 'D':
-                        destIdx--;
-                        printf("\033[D");
+                        if(destIdx > 0)
+                        {
+                            destIdx--;
+                            printf("\033[D");
+                        }
                         break;
                 }
                 break;
@@ -83,6 +103,7 @@ void getTermLine(char* dest)
                 insertch(ch, destIdx++, dest);
                 refreshLine(dest, destIdx);
                 printf("\033[1C");
+                writtenLength++;
         };
     } while(ch != '\n');
 }
